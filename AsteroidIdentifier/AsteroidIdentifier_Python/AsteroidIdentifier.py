@@ -1,10 +1,13 @@
-import numpy as np
 import astropy as ast
 import os
 import requests
 import re
 from lxml import html
 import datetime
+from astropy.io import fits
+from matplotlib import pyplot as plt
+import numpy as np
+import sys
 
 def printMessage(message, *args, **kwargs):
     print("--|| message ||-- {}".format(message))
@@ -102,10 +105,44 @@ for folder in os.listdir(dataDirectory):
             dates.append(date)
             observationSets.append(folder)
     
-dates.sort(reverse = True)
+sortedDates = dates.copy()
+sortedDates.sort(reverse = True)
 
-latestSet = dates[0]
+if len(sortedDates) == 0:
+    printWarning("there were no new data files")
+    input("Press enter to exit... ")
+    sys.exit()
+
+latestSet = observationSets[dates.index(sortedDates[0])]
 
 printMessage("selected observation set: {}".format(latestSet))
 
+latestSetDirectory = os.path.join(dataDirectory, latestSet)
+
+dataFiles = []
+for file in os.listdir(latestSetDirectory):
+    if file.endswith("fits"):
+        dataFiles.append(os.path.join(latestSetDirectory, file))
+
 # Use astropy to analyse the data
+imageFiles = [fits.open(file) for file in dataFiles]
+imageData = [file[0].data for file in imageFiles]
+for file in imageFiles:
+    file.close()
+
+#for image in imageData:
+#    plt.imshow(image, cmap = "gray")
+#    plt.show()
+
+print(imageData[0].shape)
+print(imageData[1].shape)
+print(imageData[2].shape)
+print(imageData[3].shape)
+
+#plt.imshow((imageData[0] + imageData[1] + imageData[2] + imageData[3]) / 4, cmap = "gray")
+#plt.colorbar()
+#plt.show()
+
+plt.imshow(imageData[0], cmap = "gray")
+plt.colorbar()
+plt.show()
